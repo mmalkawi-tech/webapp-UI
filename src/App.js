@@ -1,42 +1,31 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "./App.css";
+import { postImage } from "./services/api";
 
 function App() {
   const [selectedA, setSelectedA] = useState(null);
   const [selectedB, setSelectedB] = useState(null);
   const [response, setResponse] = useState(null);
 
-  // Use relative paths - nginx will route to the correct backend
-  const getApiUrl = (target) => {
-    return `/api/${target}`;
-  };
-
   async function uploadTo(target) {
-    if (!selectedA && target === 'a') {
-      alert('Please select a file first');
-      return;
-    }
-    if (!selectedB && target === 'b') {
-      alert('Please select a file first');
-      return;
-    }
+    const file = target === "a" ? selectedA : selectedB;
 
-    const form = new FormData();
-    if (target === "a") form.append("image", selectedA);
-    if (target === "b") form.append("image", selectedB);
+    if (!file) {
+      alert("Please select a file first");
+      return;
+    }
 
     try {
-      const res = await fetch(getApiUrl(target), { method: "POST", body: form });
-      const data = await res.json();
+      const data = await postImage(`/api/${target}`, file);
       setResponse(data);
-    } catch (error) {
-      setResponse({ error: error.message });
+    } catch (e) {
+      setResponse({ error: e.message });
     }
   }
 
   return (
-    <div className="page">
-      <h1>Multi-Backend Image Upload (Kubernetes)</h1>
+    <div className="App">
+      <h1>Moath UI</h1>
 
       <div className="grid">
         <div className="card">
@@ -52,10 +41,7 @@ function App() {
         </div>
       </div>
 
-      <div className="response-section">
-        <h2>Response:</h2>
-        <pre>{response ? JSON.stringify(response, null, 2) : "No responses yet"}</pre>
-      </div>
+      <pre className="response">{response ? JSON.stringify(response, null, 2) : "No response yet"}</pre>
     </div>
   );
 }
