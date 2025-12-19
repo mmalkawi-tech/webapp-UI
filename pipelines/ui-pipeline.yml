@@ -4,8 +4,11 @@ trigger:
       - main
   paths:
     include:
-      - ui/**
-      - ui/pipelines/ui-pipeline.yml
+      - src/**
+      - public/**
+      - package.json
+      - package-lock.json
+      - pipelines/ui-pipeline.yml
 
 pool:
   vmImage: ubuntu-latest
@@ -30,18 +33,17 @@ stages:
         versionSpec: $(NODE_VERSION)
       displayName: "Use Node $(NODE_VERSION)"
 
-    # 🔧 FINAL FIXED BUILD STEP
+    # ✅ REAL FINAL BUILD (ROOT)
     - script: |
         set -e
-        cd ui
         npm ci
         npm run build
       displayName: "Install & Build UI"
 
-    # 🔧 FINAL FIXED ARCHIVE STEP
+    # ✅ REAL FINAL ARCHIVE (ROOT build/)
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: "ui/build"
+        rootFolderOrFile: "build"
         includeRootFolder: false
         archiveType: zip
         archiveFile: "$(Build.ArtifactStagingDirectory)/ui.zip"
