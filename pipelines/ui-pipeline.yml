@@ -4,7 +4,7 @@ trigger:
       - main
   paths:
     include:
-      - webapp/ui/**
+      - ui/**
       - pipelines/ui-pipeline.yml
 
 pool:
@@ -30,29 +30,16 @@ stages:
         versionSpec: $(NODE_VERSION)
       displayName: "Use Node $(NODE_VERSION)"
 
-    # 🧱 STEP 1 — DEBUG (ONE TIME)
-    - script: |
-        echo "===== DEBUG: Repo root ====="
-        pwd
-        echo "===== DEBUG: List files ====="
-        ls -la
-        echo "===== DEBUG: Find UI ====="
-        find . -maxdepth 3 -type d -name ui
-      displayName: "Debug repo structure"
-
-    # 🧱 STEP 2 — SAFE BUILD (TEMP PATH, WILL FIX AFTER DEBUG)
     - script: |
         set -e
-        cd $(Build.SourcesDirectory)
-        cd webapp/ui
+        cd ui
         npm ci
         npm run build
       displayName: "Install & Build UI"
 
-    # 🧱 STEP 3 — SAFE ARCHIVE
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: "$(Build.SourcesDirectory)/webapp/ui/build"
+        rootFolderOrFile: "ui/build"
         includeRootFolder: false
         archiveType: zip
         archiveFile: "$(Build.ArtifactStagingDirectory)/ui.zip"
