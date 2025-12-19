@@ -4,7 +4,7 @@ trigger:
       - main
   paths:
     include:
-      - ui/**
+      - webapp/ui/**
       - pipelines/ui-pipeline.yml
 
 pool:
@@ -32,14 +32,14 @@ stages:
 
     - script: |
         set -e
-        cd ui
+        cd webapp/ui
         npm ci
         npm run build
       displayName: "Install & Build UI"
 
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: "ui/build"
+        rootFolderOrFile: "webapp/ui/build"
         includeRootFolder: false
         archiveType: zip
         archiveFile: "$(Build.ArtifactStagingDirectory)/ui.zip"
@@ -73,7 +73,6 @@ stages:
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
 
-          # ✅ Fix deprecated runtime + define startup
           - task: AzureAppServiceSettings@1
             displayName: "Configure DEV runtime (Node 20) + startup"
             inputs:
