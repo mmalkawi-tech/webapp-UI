@@ -4,8 +4,8 @@ trigger:
       - main
   paths:
     include:
-      - WEBAPP/ui/**
-      - WEBAPP/ui/pipelines/ui-pipeline.yml
+      - ui/**
+      - ui/pipelines/ui-pipeline.yml
 
 pool:
   vmImage: ubuntu-latest
@@ -30,16 +30,18 @@ stages:
         versionSpec: $(NODE_VERSION)
       displayName: "Use Node $(NODE_VERSION)"
 
+    # 🔧 FINAL FIXED BUILD STEP
     - script: |
         set -e
-        cd WEBAPP/ui
+        cd ui
         npm ci
         npm run build
       displayName: "Install & Build UI"
 
+    # 🔧 FINAL FIXED ARCHIVE STEP
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: "WEBAPP/ui/build"
+        rootFolderOrFile: "ui/build"
         includeRootFolder: false
         archiveType: zip
         archiveFile: "$(Build.ArtifactStagingDirectory)/ui.zip"
