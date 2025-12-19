@@ -4,8 +4,8 @@ trigger:
       - main
   paths:
     include:
-      - ui/**
-      - pipelines/ui-pipeline.yml
+      - WEBAPP/ui/**
+      - WEBAPP/ui/pipelines/ui-pipeline.yml
 
 pool:
   vmImage: ubuntu-latest
@@ -32,14 +32,14 @@ stages:
 
     - script: |
         set -e
-        cd ui
+        cd WEBAPP/ui
         npm ci
         npm run build
       displayName: "Install & Build UI"
 
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: "ui/build"
+        rootFolderOrFile: "WEBAPP/ui/build"
         includeRootFolder: false
         archiveType: zip
         archiveFile: "$(Build.ArtifactStagingDirectory)/ui.zip"
@@ -85,7 +85,10 @@ stages:
                   { "name": "REACT_APP_API_BASE_URL", "value": "$(REACT_APP_API_BASE_URL)", "slotSetting": false }
                 ]
               generalSettings: |
-                { "linuxFxVersion": "NODE|20-lts", "appCommandLine": "npx serve -s build --listen 8080" }
+                {
+                  "linuxFxVersion": "NODE|20-lts",
+                  "appCommandLine": "npx serve -s build --listen 8080"
+                }
 
 # ============================
 # QA
@@ -122,7 +125,10 @@ stages:
                   { "name": "REACT_APP_API_BASE_URL", "value": "$(REACT_APP_API_BASE_URL)", "slotSetting": false }
                 ]
               generalSettings: |
-                { "linuxFxVersion": "NODE|20-lts", "appCommandLine": "npx serve -s build --listen 8080" }
+                {
+                  "linuxFxVersion": "NODE|20-lts",
+                  "appCommandLine": "npx serve -s build --listen 8080"
+                }
 
 # ============================
 # PROD
@@ -159,4 +165,7 @@ stages:
                   { "name": "REACT_APP_API_BASE_URL", "value": "$(REACT_APP_API_BASE_URL)", "slotSetting": false }
                 ]
               generalSettings: |
-                { "linuxFxVersion": "NODE|20-lts", "appCommandLine": "npx serve -s build --listen 8080" }
+                {
+                  "linuxFxVersion": "NODE|20-lts",
+                  "appCommandLine": "npx serve -s build --listen 8080"
+                }
