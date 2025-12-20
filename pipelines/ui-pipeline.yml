@@ -77,23 +77,32 @@ stages:
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
 
-          - task: AzureAppServiceSettings@1
-            displayName: "Configure DEV runtime (Node 20) + startup"
+          # ✅ FINAL FIX — AZURE CLI (DEV)
+          - task: AzureCLI@2
+            displayName: "Set DEV Node 20 runtime + startup"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
-              appName: $(APP_SERVICE_NAME)
-              appSettings: |
-                [
-                  { "name": "WEBSITES_PORT", "value": "8080", "slotSetting": false },
-                  { "name": "NODE_ENV", "value": "production", "slotSetting": false },
-                  { "name": "CI", "value": "false", "slotSetting": false },
-                  { "name": "REACT_APP_API_BASE_URL", "value": "$(REACT_APP_API_BASE_URL)", "slotSetting": false }
-                ]
-              generalSettings: |
-                {
-                  "linuxFxVersion": "NODE|20-lts",
-                  "appCommandLine": "npx serve -s . --listen 8080"
-                }
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az webapp config set \
+                  --name $(APP_SERVICE_NAME) \
+                  --resource-group rg-moath-dev \
+                  --linux-fx-version "NODE|20-lts"
+
+                az webapp config set \
+                  --name $(APP_SERVICE_NAME) \
+                  --resource-group rg-moath-dev \
+                  --startup-file "npx serve -s . --listen 8080"
+
+                az webapp config appsettings set \
+                  --name $(APP_SERVICE_NAME) \
+                  --resource-group rg-moath-dev \
+                  --settings \
+                    WEBSITES_PORT=8080 \
+                    NODE_ENV=production \
+                    CI=false \
+                    REACT_APP_API_BASE_URL=$(REACT_APP_API_BASE_URL)
 
 # ============================
 # QA
@@ -118,23 +127,32 @@ stages:
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
 
-          - task: AzureAppServiceSettings@1
-            displayName: "Configure QA runtime (Node 20) + startup"
+          # ✅ FINAL FIX — AZURE CLI (QA)
+          - task: AzureCLI@2
+            displayName: "Set QA Node 20 runtime + startup"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
-              appName: $(APP_SERVICE_NAME)
-              appSettings: |
-                [
-                  { "name": "WEBSITES_PORT", "value": "8080", "slotSetting": false },
-                  { "name": "NODE_ENV", "value": "production", "slotSetting": false },
-                  { "name": "CI", "value": "false", "slotSetting": false },
-                  { "name": "REACT_APP_API_BASE_URL", "value": "$(REACT_APP_API_BASE_URL)", "slotSetting": false }
-                ]
-              generalSettings: |
-                {
-                  "linuxFxVersion": "NODE|20-lts",
-                  "appCommandLine": "npx serve -s . --listen 8080"
-                }
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az webapp config set \
+                  --name $(APP_SERVICE_NAME) \
+                  --resource-group rg-moath-qa \
+                  --linux-fx-version "NODE|20-lts"
+
+                az webapp config set \
+                  --name $(APP_SERVICE_NAME) \
+                  --resource-group rg-moath-qa \
+                  --startup-file "npx serve -s . --listen 8080"
+
+                az webapp config appsettings set \
+                  --name $(APP_SERVICE_NAME) \
+                  --resource-group rg-moath-qa \
+                  --settings \
+                    WEBSITES_PORT=8080 \
+                    NODE_ENV=production \
+                    CI=false \
+                    REACT_APP_API_BASE_URL=$(REACT_APP_API_BASE_URL)
 
 # ============================
 # PROD
@@ -159,20 +177,29 @@ stages:
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
 
-          - task: AzureAppServiceSettings@1
-            displayName: "Configure PROD runtime (Node 20) + startup"
+          # ✅ FINAL FIX — AZURE CLI (PROD)
+          - task: AzureCLI@2
+            displayName: "Set PROD Node 20 runtime + startup"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
-              appName: $(APP_SERVICE_NAME)
-              appSettings: |
-                [
-                  { "name": "WEBSITES_PORT", "value": "8080", "slotSetting": false },
-                  { "name": "NODE_ENV", "value": "production", "slotSetting": false },
-                  { "name": "CI", "value": "false", "slotSetting": false },
-                  { "name": "REACT_APP_API_BASE_URL", "value": "$(REACT_APP_API_BASE_URL)", "slotSetting": false }
-                ]
-              generalSettings: |
-                {
-                  "linuxFxVersion": "NODE|20-lts",
-                  "appCommandLine": "npx serve -s . --listen 8080"
-                }
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az webapp config set \
+                  --name $(APP_SERVICE_NAME) \
+                  --resource-group rg-moath-prod \
+                  --linux-fx-version "NODE|20-lts"
+
+                az webapp config set \
+                  --name $(APP_SERVICE_NAME) \
+                  --resource-group rg-moath-prod \
+                  --startup-file "npx serve -s . --listen 8080"
+
+                az webapp config appsettings set \
+                  --name $(APP_SERVICE_NAME) \
+                  --resource-group rg-moath-prod \
+                  --settings \
+                    WEBSITES_PORT=8080 \
+                    NODE_ENV=production \
+                    CI=false \
+                    REACT_APP_API_BASE_URL=$(REACT_APP_API_BASE_URL)
