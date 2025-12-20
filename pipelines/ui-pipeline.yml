@@ -76,10 +76,11 @@ stages:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
+              runtimeStack: "NODE|20-lts"
+              startupCommand: "npx serve -s build --listen 8080"
 
-          # ✅ Fix deprecated runtime
           - task: AzureAppServiceSettings@1
-            displayName: "Set Node 20 runtime"
+            displayName: "Set App Settings (DEV)"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
@@ -89,11 +90,6 @@ stages:
                   { "name": "WEBSITES_PORT", "value": "8080", "slotSetting": false },
                   { "name": "REACT_APP_API_BASE_URL", "value": "$(REACT_APP_API_BASE_URL)", "slotSetting": false }
                 ]
-              generalSettings: |
-                {
-                  "linuxFxVersion": "NODE|20-lts",
-                  "appCommandLine": "npx serve -s build --listen 8080"
-                }
 
 # ============================
 # QA
@@ -112,10 +108,25 @@ stages:
         deploy:
           steps:
           - task: AzureWebApp@1
+            displayName: "Deploy UI to QA"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
+              runtimeStack: "NODE|20-lts"
+              startupCommand: "npx serve -s build --listen 8080"
+
+          - task: AzureAppServiceSettings@1
+            displayName: "Set App Settings (QA)"
+            inputs:
+              azureSubscription: $(AZURE_SERVICE_CONNECTION)
+              appName: $(APP_SERVICE_NAME)
+              appSettings: |
+                [
+                  { "name": "NODE_ENV", "value": "production", "slotSetting": false },
+                  { "name": "WEBSITES_PORT", "value": "8080", "slotSetting": false },
+                  { "name": "REACT_APP_API_BASE_URL", "value": "$(REACT_APP_API_BASE_URL)", "slotSetting": false }
+                ]
 
 # ============================
 # PROD
@@ -134,7 +145,22 @@ stages:
         deploy:
           steps:
           - task: AzureWebApp@1
+            displayName: "Deploy UI to PROD"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
+              runtimeStack: "NODE|20-lts"
+              startupCommand: "npx serve -s build --listen 8080"
+
+          - task: AzureAppServiceSettings@1
+            displayName: "Set App Settings (PROD)"
+            inputs:
+              azureSubscription: $(AZURE_SERVICE_CONNECTION)
+              appName: $(APP_SERVICE_NAME)
+              appSettings: |
+                [
+                  { "name": "NODE_ENV", "value": "production", "slotSetting": false },
+                  { "name": "WEBSITES_PORT", "value": "8080", "slotSetting": false },
+                  { "name": "REACT_APP_API_BASE_URL", "value": "$(REACT_APP_API_BASE_URL)", "slotSetting": false }
+                ]
