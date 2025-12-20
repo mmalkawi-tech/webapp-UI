@@ -17,69 +17,45 @@ variables:
   NODE_VERSION: "20.x"
   AZURE_SERVICE_CONNECTION: "moath-sp-new"
 
-stages:
-# ============================
-# BUILD
-# ============================
-- stage: Build
-  displayName: "Build UI"
-  jobs:
-  - job: BuildUI
-    steps:
-    - checkout: self
-
-    - task: NodeTool@0
-      inputs:
-        versionSpec: $(NODE_VERSION)
-      displayName: "Use Node $(NODE_VERSION)"
-
-    # 🔑 Inject env var BEFORE build (CRITICAL)
-    - script: |
-        set -e
-        echo "REACT_APP_API_BASE_URL=https://apim-moath-dev-v2.azure-api.net" > .env
-        npm ci
-        npm run build
-      displayName: "Install & Build UI"
-
-    # ✅ Archive build output
-    - task: ArchiveFiles@2
-      inputs:
-        rootFolderOrFile: "build"
-        includeRootFolder: false
-        archiveType: zip
-        archiveFile: "$(Build.ArtifactStagingDirectory)/ui.zip"
-        replaceExistingArchive: true
-      displayName: "Archive build output"
-
-    - publish: "$(Build.ArtifactStagingDirectory)/ui.zip"
-      artifact: drop
-      displayName: "Publish artifact"
-
-# ============================
+# =========================================================
 # DEV
-# ============================
+# =========================================================
 - stage: Dev
-  displayName: "Deploy DEV"
-  dependsOn: Build
-  variables:
-    APP_SERVICE_NAME: "ui-moath-dev"
-    REACT_APP_API_BASE_URL: "https://apim-moath-dev-v2.azure-api.net"
+  displayName: "Build & Deploy UI - DEV"
   jobs:
   - deployment: DeployDev
     environment: dev
+    variables:
+      APP_SERVICE_NAME: "ui-moath-dev"
+      REACT_APP_API_BASE_URL: "https://apim-moath-dev-v2.azure-api.net"
     strategy:
       runOnce:
         deploy:
           steps:
+          - checkout: self
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(NODE_VERSION)
+            displayName: "Use Node $(NODE_VERSION)"
+
+          # 🔑 BUILD WITH DEV API URL (CRITICAL)
+          - script: |
+              npm ci
+              npm run build
+            displayName: "Build UI (DEV)"
+            env:
+              REACT_APP_API_BASE_URL: $(REACT_APP_API_BASE_URL)
+
           - task: AzureWebApp@1
             displayName: "Deploy UI to DEV"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
-              package: "$(Pipeline.Workspace)/drop/ui.zip"
+              package: build
 
           - task: AzureCLI@2
-            displayName: "Set DEV Node 20 runtime + startup"
+            displayName: "Configure DEV App Service"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               scriptType: bash
@@ -98,37 +74,48 @@ stages:
                 az webapp config appsettings set \
                   --name $(APP_SERVICE_NAME) \
                   --resource-group rg-moath-dev \
-                  --settings \
-                    WEBSITES_PORT=8080 \
-                    NODE_ENV=production \
-                    CI=false \
-                    REACT_APP_API_BASE_URL=$(REACT_APP_API_BASE_URL)
+                  --settings WEBSITES_PORT=8080 NODE_ENV=production CI=false
 
-# ============================
+# =========================================================
 # QA
-# ============================
+# =========================================================
 - stage: QA
-  displayName: "Deploy QA"
+  displayName: "Build & Deploy UI - QA"
   dependsOn: Dev
-  variables:
-    APP_SERVICE_NAME: "ui-moath-qa"
-    REACT_APP_API_BASE_URL: "https://apim-moath-qa-v2.azure-api.net"
   jobs:
   - deployment: DeployQA
     environment: qa
+    variables:
+      APP_SERVICE_NAME: "ui-moath-qa"
+      REACT_APP_API_BASE_URL: "https://apim-moath-qa-v2.azure-api.net"
     strategy:
       runOnce:
         deploy:
           steps:
+          - checkout: self
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(NODE_VERSION)
+            displayName: "Use Node $(NODE_VERSION)"
+
+          # 🔑 BUILD WITH QA API URL
+          - script: |
+              npm ci
+              npm run build
+            displayName: "Build UI (QA)"
+            env:
+              REACT_APP_API_BASE_URL: $(REACT_APP_API_BASE_URL)
+
           - task: AzureWebApp@1
             displayName: "Deploy UI to QA"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
-              package: "$(Pipeline.Workspace)/drop/ui.zip"
+              package: build
 
           - task: AzureCLI@2
-            displayName: "Set QA Node 20 runtime + startup"
+            displayName: "Configure QA App Service"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               scriptType: bash
@@ -147,37 +134,48 @@ stages:
                 az webapp config appsettings set \
                   --name $(APP_SERVICE_NAME) \
                   --resource-group rg-moath-qa \
-                  --settings \
-                    WEBSITES_PORT=8080 \
-                    NODE_ENV=production \
-                    CI=false \
-                    REACT_APP_API_BASE_URL=$(REACT_APP_API_BASE_URL)
+                  --settings WEBSITES_PORT=8080 NODE_ENV=production CI=false
 
-# ============================
+# =========================================================
 # PROD
-# ============================
+# =========================================================
 - stage: Prod
-  displayName: "Deploy PROD"
+  displayName: "Build & Deploy UI - PROD"
   dependsOn: QA
-  variables:
-    APP_SERVICE_NAME: "ui-moath-prod"
-    REACT_APP_API_BASE_URL: "https://apim-moath-prod-v2.azure-api.net"
   jobs:
   - deployment: DeployProd
     environment: prod
+    variables:
+      APP_SERVICE_NAME: "ui-moath-prod"
+      REACT_APP_API_BASE_URL: "https://apim-moath-prod-v2.azure-api.net"
     strategy:
       runOnce:
         deploy:
           steps:
+          - checkout: self
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(NODE_VERSION)
+            displayName: "Use Node $(NODE_VERSION)"
+
+          # 🔑 BUILD WITH PROD API URL
+          - script: |
+              npm ci
+              npm run build
+            displayName: "Build UI (PROD)"
+            env:
+              REACT_APP_API_BASE_URL: $(REACT_APP_API_BASE_URL)
+
           - task: AzureWebApp@1
             displayName: "Deploy UI to PROD"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
-              package: "$(Pipeline.Workspace)/drop/ui.zip"
+              package: build
 
           - task: AzureCLI@2
-            displayName: "Set PROD Node 20 runtime + startup"
+            displayName: "Configure PROD App Service"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               scriptType: bash
@@ -196,8 +194,4 @@ stages:
                 az webapp config appsettings set \
                   --name $(APP_SERVICE_NAME) \
                   --resource-group rg-moath-prod \
-                  --settings \
-                    WEBSITES_PORT=8080 \
-                    NODE_ENV=production \
-                    CI=false \
-                    REACT_APP_API_BASE_URL=$(REACT_APP_API_BASE_URL)
+                  --settings WEBSITES_PORT=8080 NODE_ENV=production CI=false
