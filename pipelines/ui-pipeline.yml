@@ -33,14 +33,15 @@ stages:
         versionSpec: $(NODE_VERSION)
       displayName: "Use Node $(NODE_VERSION)"
 
-    # ✅ BUILD FROM REPO ROOT
+    # 🔑 Inject env var BEFORE build (CRITICAL)
     - script: |
         set -e
+        echo "REACT_APP_API_BASE_URL=https://apim-moath-dev-v2.azure-api.net" > .env
         npm ci
         npm run build
       displayName: "Install & Build UI"
 
-    # ✅ ARCHIVE ROOT build/
+    # ✅ Archive build output
     - task: ArchiveFiles@2
       inputs:
         rootFolderOrFile: "build"
@@ -77,7 +78,6 @@ stages:
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
 
-          # ✅ FINAL FIX — AZURE CLI (DEV)
           - task: AzureCLI@2
             displayName: "Set DEV Node 20 runtime + startup"
             inputs:
@@ -127,7 +127,6 @@ stages:
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
 
-          # ✅ FINAL FIX — AZURE CLI (QA)
           - task: AzureCLI@2
             displayName: "Set QA Node 20 runtime + startup"
             inputs:
@@ -177,7 +176,6 @@ stages:
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
 
-          # ✅ FINAL FIX — AZURE CLI (PROD)
           - task: AzureCLI@2
             displayName: "Set PROD Node 20 runtime + startup"
             inputs:
