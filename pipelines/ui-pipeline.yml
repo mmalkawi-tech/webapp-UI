@@ -2,13 +2,6 @@ trigger:
   branches:
     include:
       - main
-  paths:
-    include:
-      - src/**
-      - public/**
-      - package.json
-      - package-lock.json
-      - pipelines/ui-pipeline.yml
 
 pool:
   vmImage: ubuntu-latest
@@ -17,181 +10,165 @@ variables:
   NODE_VERSION: "20.x"
   AZURE_SERVICE_CONNECTION: "moath-sp-new"
 
-# =========================================================
+stages:
+
+# =====================================================
 # DEV
-# =========================================================
+# =====================================================
 - stage: Dev
-  displayName: "Build & Deploy UI - DEV"
+  displayName: Deploy DEV
   jobs:
-  - deployment: DeployDev
-    environment: dev
+  - job: Dev
+    displayName: Build & Deploy DEV
     variables:
-      APP_SERVICE_NAME: "ui-moath-dev"
-      REACT_APP_API_BASE_URL: "https://apim-moath-dev-v2.azure-api.net"
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - checkout: self
+      APP_SERVICE_NAME: ui-moath-dev
+      REACT_APP_API_BASE_URL: https://apim-moath-dev-v2.azure-api.net
+    steps:
+    - checkout: self
 
-          - task: NodeTool@0
-            inputs:
-              versionSpec: $(NODE_VERSION)
-            displayName: "Use Node $(NODE_VERSION)"
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(NODE_VERSION)
 
-          # 🔑 BUILD WITH DEV API URL (CRITICAL)
-          - script: |
-              npm ci
-              npm run build
-            displayName: "Build UI (DEV)"
-            env:
-              REACT_APP_API_BASE_URL: $(REACT_APP_API_BASE_URL)
+    - script: |
+        npm ci
+        npm run build
+      displayName: Build UI (DEV)
+      env:
+        REACT_APP_API_BASE_URL: $(REACT_APP_API_BASE_URL)
 
-          - task: AzureWebApp@1
-            displayName: "Deploy UI to DEV"
-            inputs:
-              azureSubscription: $(AZURE_SERVICE_CONNECTION)
-              appName: $(APP_SERVICE_NAME)
-              package: build
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: $(AZURE_SERVICE_CONNECTION)
+        appName: $(APP_SERVICE_NAME)
+        package: build
 
-          - task: AzureCLI@2
-            displayName: "Configure DEV App Service"
-            inputs:
-              azureSubscription: $(AZURE_SERVICE_CONNECTION)
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                az webapp config set \
-                  --name $(APP_SERVICE_NAME) \
-                  --resource-group rg-moath-dev \
-                  --linux-fx-version "NODE|20-lts"
+    - task: AzureCLI@2
+      displayName: Configure DEV App Service
+      inputs:
+        azureSubscription: $(AZURE_SERVICE_CONNECTION)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az webapp config set \
+            --name $(APP_SERVICE_NAME) \
+            --resource-group rg-moath-dev \
+            --linux-fx-version "NODE|20-lts"
 
-                az webapp config set \
-                  --name $(APP_SERVICE_NAME) \
-                  --resource-group rg-moath-dev \
-                  --startup-file "npx serve -s . --listen 8080"
+          az webapp config set \
+            --name $(APP_SERVICE_NAME) \
+            --resource-group rg-moath-dev \
+            --startup-file "npx serve -s . --listen 8080"
 
-                az webapp config appsettings set \
-                  --name $(APP_SERVICE_NAME) \
-                  --resource-group rg-moath-dev \
-                  --settings WEBSITES_PORT=8080 NODE_ENV=production CI=false
+          az webapp config appsettings set \
+            --name $(APP_SERVICE_NAME) \
+            --resource-group rg-moath-dev \
+            --settings WEBSITES_PORT=8080 NODE_ENV=production CI=false
 
-# =========================================================
+# =====================================================
 # QA
-# =========================================================
+# =====================================================
 - stage: QA
-  displayName: "Build & Deploy UI - QA"
+  displayName: Deploy QA
   dependsOn: Dev
   jobs:
-  - deployment: DeployQA
-    environment: qa
+  - job: QA
+    displayName: Build & Deploy QA
     variables:
-      APP_SERVICE_NAME: "ui-moath-qa"
-      REACT_APP_API_BASE_URL: "https://apim-moath-qa-v2.azure-api.net"
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - checkout: self
+      APP_SERVICE_NAME: ui-moath-qa
+      REACT_APP_API_BASE_URL: https://apim-moath-qa-v2.azure-api.net
+    steps:
+    - checkout: self
 
-          - task: NodeTool@0
-            inputs:
-              versionSpec: $(NODE_VERSION)
-            displayName: "Use Node $(NODE_VERSION)"
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(NODE_VERSION)
 
-          # 🔑 BUILD WITH QA API URL
-          - script: |
-              npm ci
-              npm run build
-            displayName: "Build UI (QA)"
-            env:
-              REACT_APP_API_BASE_URL: $(REACT_APP_API_BASE_URL)
+    - script: |
+        npm ci
+        npm run build
+      displayName: Build UI (QA)
+      env:
+        REACT_APP_API_BASE_URL: $(REACT_APP_API_BASE_URL)
 
-          - task: AzureWebApp@1
-            displayName: "Deploy UI to QA"
-            inputs:
-              azureSubscription: $(AZURE_SERVICE_CONNECTION)
-              appName: $(APP_SERVICE_NAME)
-              package: build
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: $(AZURE_SERVICE_CONNECTION)
+        appName: $(APP_SERVICE_NAME)
+        package: build
 
-          - task: AzureCLI@2
-            displayName: "Configure QA App Service"
-            inputs:
-              azureSubscription: $(AZURE_SERVICE_CONNECTION)
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                az webapp config set \
-                  --name $(APP_SERVICE_NAME) \
-                  --resource-group rg-moath-qa \
-                  --linux-fx-version "NODE|20-lts"
+    - task: AzureCLI@2
+      displayName: Configure QA App Service
+      inputs:
+        azureSubscription: $(AZURE_SERVICE_CONNECTION)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az webapp config set \
+            --name $(APP_SERVICE_NAME) \
+            --resource-group rg-moath-qa \
+            --linux-fx-version "NODE|20-lts"
 
-                az webapp config set \
-                  --name $(APP_SERVICE_NAME) \
-                  --resource-group rg-moath-qa \
-                  --startup-file "npx serve -s . --listen 8080"
+          az webapp config set \
+            --name $(APP_SERVICE_NAME) \
+            --resource-group rg-moath-qa \
+            --startup-file "npx serve -s . --listen 8080"
 
-                az webapp config appsettings set \
-                  --name $(APP_SERVICE_NAME) \
-                  --resource-group rg-moath-qa \
-                  --settings WEBSITES_PORT=8080 NODE_ENV=production CI=false
+          az webapp config appsettings set \
+            --name $(APP_SERVICE_NAME) \
+            --resource-group rg-moath-qa \
+            --settings WEBSITES_PORT=8080 NODE_ENV=production CI=false
 
-# =========================================================
+# =====================================================
 # PROD
-# =========================================================
+# =====================================================
 - stage: Prod
-  displayName: "Build & Deploy UI - PROD"
+  displayName: Deploy PROD
   dependsOn: QA
   jobs:
-  - deployment: DeployProd
-    environment: prod
+  - job: Prod
+    displayName: Build & Deploy PROD
     variables:
-      APP_SERVICE_NAME: "ui-moath-prod"
-      REACT_APP_API_BASE_URL: "https://apim-moath-prod-v2.azure-api.net"
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - checkout: self
+      APP_SERVICE_NAME: ui-moath-prod
+      REACT_APP_API_BASE_URL: https://apim-moath-prod-v2.azure-api.net
+    steps:
+    - checkout: self
 
-          - task: NodeTool@0
-            inputs:
-              versionSpec: $(NODE_VERSION)
-            displayName: "Use Node $(NODE_VERSION)"
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(NODE_VERSION)
 
-          # 🔑 BUILD WITH PROD API URL
-          - script: |
-              npm ci
-              npm run build
-            displayName: "Build UI (PROD)"
-            env:
-              REACT_APP_API_BASE_URL: $(REACT_APP_API_BASE_URL)
+    - script: |
+        npm ci
+        npm run build
+      displayName: Build UI (PROD)
+      env:
+        REACT_APP_API_BASE_URL: $(REACT_APP_API_BASE_URL)
 
-          - task: AzureWebApp@1
-            displayName: "Deploy UI to PROD"
-            inputs:
-              azureSubscription: $(AZURE_SERVICE_CONNECTION)
-              appName: $(APP_SERVICE_NAME)
-              package: build
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: $(AZURE_SERVICE_CONNECTION)
+        appName: $(APP_SERVICE_NAME)
+        package: build
 
-          - task: AzureCLI@2
-            displayName: "Configure PROD App Service"
-            inputs:
-              azureSubscription: $(AZURE_SERVICE_CONNECTION)
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                az webapp config set \
-                  --name $(APP_SERVICE_NAME) \
-                  --resource-group rg-moath-prod \
-                  --linux-fx-version "NODE|20-lts"
+    - task: AzureCLI@2
+      displayName: Configure PROD App Service
+      inputs:
+        azureSubscription: $(AZURE_SERVICE_CONNECTION)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az webapp config set \
+            --name $(APP_SERVICE_NAME) \
+            --resource-group rg-moath-prod \
+            --linux-fx-version "NODE|20-lts"
 
-                az webapp config set \
-                  --name $(APP_SERVICE_NAME) \
-                  --resource-group rg-moath-prod \
-                  --startup-file "npx serve -s . --listen 8080"
+          az webapp config set \
+            --name $(APP_SERVICE_NAME) \
+            --resource-group rg-moath-prod \
+            --startup-file "npx serve -s . --listen 8080"
 
-                az webapp config appsettings set \
-                  --name $(APP_SERVICE_NAME) \
-                  --resource-group rg-moath-prod \
-                  --settings WEBSITES_PORT=8080 NODE_ENV=production CI=false
+          az webapp config appsettings set \
+            --name $(APP_SERVICE_NAME) \
+            --resource-group rg-moath-prod \
+            --settings WEBSITES_PORT=8080 NODE_ENV=production CI=false
