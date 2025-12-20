@@ -76,20 +76,24 @@ stages:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
-              runtimeStack: "NODE|20-lts"
-              startupCommand: "npx serve -s build --listen 8080"
 
           - task: AzureAppServiceSettings@1
-            displayName: "Set App Settings (DEV)"
+            displayName: "Configure DEV runtime (Node 20) + startup"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
               appSettings: |
                 [
-                  { "name": "NODE_ENV", "value": "production", "slotSetting": false },
                   { "name": "WEBSITES_PORT", "value": "8080", "slotSetting": false },
+                  { "name": "NODE_ENV", "value": "production", "slotSetting": false },
+                  { "name": "CI", "value": "false", "slotSetting": false },
                   { "name": "REACT_APP_API_BASE_URL", "value": "$(REACT_APP_API_BASE_URL)", "slotSetting": false }
                 ]
+              generalSettings: |
+                {
+                  "linuxFxVersion": "NODE|20-lts",
+                  "appCommandLine": "npx serve -s . --listen 8080"
+                }
 
 # ============================
 # QA
@@ -113,20 +117,24 @@ stages:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
-              runtimeStack: "NODE|20-lts"
-              startupCommand: "npx serve -s build --listen 8080"
 
           - task: AzureAppServiceSettings@1
-            displayName: "Set App Settings (QA)"
+            displayName: "Configure QA runtime (Node 20) + startup"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
               appSettings: |
                 [
-                  { "name": "NODE_ENV", "value": "production", "slotSetting": false },
                   { "name": "WEBSITES_PORT", "value": "8080", "slotSetting": false },
+                  { "name": "NODE_ENV", "value": "production", "slotSetting": false },
+                  { "name": "CI", "value": "false", "slotSetting": false },
                   { "name": "REACT_APP_API_BASE_URL", "value": "$(REACT_APP_API_BASE_URL)", "slotSetting": false }
                 ]
+              generalSettings: |
+                {
+                  "linuxFxVersion": "NODE|20-lts",
+                  "appCommandLine": "npx serve -s . --listen 8080"
+                }
 
 # ============================
 # PROD
@@ -150,17 +158,21 @@ stages:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
               package: "$(Pipeline.Workspace)/drop/ui.zip"
-              runtimeStack: "NODE|20-lts"
-              startupCommand: "npx serve -s build --listen 8080"
 
           - task: AzureAppServiceSettings@1
-            displayName: "Set App Settings (PROD)"
+            displayName: "Configure PROD runtime (Node 20) + startup"
             inputs:
               azureSubscription: $(AZURE_SERVICE_CONNECTION)
               appName: $(APP_SERVICE_NAME)
               appSettings: |
                 [
-                  { "name": "NODE_ENV", "value": "production", "slotSetting": false },
                   { "name": "WEBSITES_PORT", "value": "8080", "slotSetting": false },
+                  { "name": "NODE_ENV", "value": "production", "slotSetting": false },
+                  { "name": "CI", "value": "false", "slotSetting": false },
                   { "name": "REACT_APP_API_BASE_URL", "value": "$(REACT_APP_API_BASE_URL)", "slotSetting": false }
                 ]
+              generalSettings: |
+                {
+                  "linuxFxVersion": "NODE|20-lts",
+                  "appCommandLine": "npx serve -s . --listen 8080"
+                }
