@@ -15,7 +15,9 @@ function App() {
     setResponse(null);
 
     try {
-      const data = await postImage(`/api/${target}`, file);
+      // Use environment variable to determine path prefix (e.g., /api/dev, /api/qa, or just /api for prod)
+      const pathPrefix = process.env.REACT_APP_PATH_PREFIX || "/api";
+      const data = await postImage(`${pathPrefix}/${target}`, file);
 
       if (data?.error) {
         setResponse({
