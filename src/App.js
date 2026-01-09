@@ -40,7 +40,7 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Moath Web App New</h1>
+      <h1>Moath Web App Capston</h1>
       <p className="subtitle">UI → APIM → AKS → PostgreSQL</p>
 
       <div className="grid">
